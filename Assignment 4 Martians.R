@@ -161,6 +161,10 @@ avg_delay <- martians_tidy3 %>%
 view(avg_delay)
 
 #create a histogram using the "duration_seconds" column
+summary(martians_tidy3)
+#wide range for the duration_seconds, we should log duration_seconds
 
-
+hist(log(martians_tidy3$duration_seconds), main = "Frequency of UFO Sightings vs. log(Duration)", 
+     xlab = "log(Duration of Sighting (seconds))", ylab = "Frequnec of UFO Sightings",
+     xlim = c(-2, 12), ylim = c(0, 6000))
 
