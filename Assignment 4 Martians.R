@@ -79,26 +79,26 @@ dim(martians)
 #ensure the column names follow the same patterns (duration.seconds vs. date_posted)
 names(martians)
 
-#view the structure of the data
+#view the structure of the data (check if its character, numeric, etc.)
 str(martians)
 
 #view a summary of the data
 summary(martians)
-#summary shows duration_seconds is numeric (str()) with a min of 0 seconds (which means no sighting) and 
+#duration_seconds is numeric with a min of 0 seconds (which means no sighting) and 
 #max is 82800000 seconds 
 #both seem unrealistic to have a sighting for 0 seconds or less and longer than a day (24 hours)
-#so we should only include sightings that are above 0 seconds and below 24 hours (86400 seconds)
+#NOTE: we should only include sightings that are above 0 seconds and below 24 hours (86400 seconds)
 
 #keep the original file untouched 
 #we will be working with the martians_tidy file with different versions 
-#keep multiple files as you edit on, it will let you look back and compare if the right/wrong changes were made
+#keep multiple files as you edit, you can look back and compare if the right/wrong changes were made
 
 #check and correct structural issues
 #identify the possible data (content) issues
 martians_tidy <- martians %>% 
-  mutate(date_sighting = as.Date(datetime)) %>% #convert datetime (character) to date - only interested in the 
+  mutate(date_sighting = as.Date(datetime)) %>% #convert datetime (character) to date (no time) - only interested in the 
   #date so make a new column labelled as date_sighting
-  mutate(date_posted = as.Date(format(dmy(date_posted), "%Y-%m-%d"))) %>% #covert the date_posted to date, 
+  mutate(date_posted = as.Date(format(dmy(date_posted), "%Y-%m-%d"))) %>% #covert the date_posted (character) to date, 
   #it is currently formatted as dmy but we are interested in ymd similar to date_sighting
   select(date_sighting, 
          city, 
@@ -133,7 +133,7 @@ martians_tidy2 <- martians_tidy %>%
   mutate(shape = ifelse(is.na(shape), "unknown", shape)) %>% #for rows where shape is NA,replace it with 
   #"unknown"
   #the ifelse statement checks if a cell value is NA, if true, assign it to "unknown", if false, keep it as the
-  #original value (shape)
+  #original value (shape) 
   filter(duration_seconds < 86400) %>% #filtering for rows where duration_seconds is below 24 hours (86400 seconds)
   #and above 0 seconds as it seems unrealistic to have a UFO sighting for more than a day 
   filter(duration_seconds > 0) %>%
@@ -144,11 +144,11 @@ martians_tidy2 <- martians_tidy %>%
   #having an empty comment, the word "HOAX" or "NUFORC" (case sensitive) in the comment suggests it was filtered 
   #by NUFORC and identified as a potential hoax
   #a note by NUFORC typically corresponded with a mention of what the sighting actually was (ie. a star or meteor, etc.)
-  #filter function will filter out the empty comments and comments with hoax or nuforc in them
+  #filter function will filter out(!) the empty comments and comments with hoax or nuforc in them
   #the downside of this method is since it is a big data set, we are hoping the creators of the data set were 
   #thorough in mentioning hoax or commenting what the actual sighting was
   #if the creator, mentioned a potential hoax via another method that does not jump out (ie. not UFO), it is difficult 
-  #to identify 
+  #to identify and remove
 
 #the creators of the dataset should've made a column that identified if the sighting may be a hoax or not, putting
 #it in the comment section is difficult to identify, especially when they are not consistent 
@@ -157,8 +157,8 @@ martians_tidy2 <- martians_tidy %>%
 #between the date of the sighting and the date it was reported
 #negative values indicates an event that was posted before it happened
 martians_tidy3 <- martians_tidy2 %>%
-  mutate(report_delay = as.numeric(date_posted - date_sighting)) %>% #convert the differences to a numberic number
-  filter(report_delay >= 0) #remove rows where the report delay is negative 
+  mutate(report_delay = as.numeric(date_posted - date_sighting)) %>% #convert the differences to a numeric number
+  filter(report_delay >= 0) #filter and remove rows where the report delay is negative 
 
 #create a table with the average report_delay per country
 avg_delay <- martians_tidy3 %>%
