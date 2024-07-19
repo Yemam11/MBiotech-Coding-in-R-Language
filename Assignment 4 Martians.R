@@ -7,11 +7,11 @@
 #1. Read the data into a dataframe
 
 #2. Check and correct structural issues
-#datetime: character - change to POSIX
-#only need the date column for further use downstream (don't need time)
-#date_posted: character - change to POSIX
-#change column name of duration.seconds to duration_seconds - all columns names should use "_" as their spaces
-#same with duration.hours.minutes
+#datetime: character - change to date
+#only need the date (in ymd not time) for further use downstream 
+#date_posted: character - change to date
+#change column name of duration.seconds to duration_seconds - all columns names should use "_" as their spaces 
+#be consistent 
 
 #3. Identify the possible data (content) issues
 #the duration.hours.minute column is unorganized, remove it to avoid redundancy since we already know the duration
@@ -27,19 +27,23 @@
 
 #there are a lot of empty spaces in country
 #its difficult to find the country its from so we are going to remove all rows with an empty space in country
+#i tried to updating the country based on the state or city columns (the city column usually had the country in bracket)
+#but I don't know how to do it properly
 
-#seconds min is 0 seconds (which means no sighting) and max is 82800000 seconds 
+#seconds: minimum is 0 seconds (which means no sighting) and maximum is 82800000 seconds 
 #both seem unrealistic so we should only include sightings that are above 0 seconds and below 24 hours (86400 seconds)
+#I don't think the sighting will go on for more than a day, it'll be more likely its not a UFO sighting and something
+#normal instead 
 
 #if the output for shape is empty (for each observation), assign it to "unknown"
 
 #5. NUFORC officials comment on sightings that may be hoax. Identify the best way to identify and 
 #remove these sightings from the dataset.
-#hoax or NUFORC side note in the comment section suggests they may be hoax
-#or empty comment
-#having an empty comment, or HOAX/NUFORC in the comment suggests it was filtered by NUFORC and identified as 
+
+
+#having an empty comment, or HOAX/NUFORC in the comment suggests it was filtered by NUFORC officials and identified as 
 #a potential hoax
-#we can remove confidently remove these rows
+#we can remove these rows
 #the creators of the dataset should've made a column that identified if the sighting may be a hoax or not, putting
 #it in the comment section is difficult to identify 
 
@@ -60,10 +64,10 @@ setwd("/Users/viantran/Downloads/MBiotech/Code")
 rm(list=ls())
 
 #loading useful packages (install them if necessary)
+#install.packages("tidyverse")
 library(tidyverse)
-library(lubridate)
 
-#read the ufo_subset csv file
+#read the ufo_subset csv file, ensure it is in your working directory
 martians <- read.csv(file="ufo_subset.csv",header = T)
 #verify it is a dataframe
 class(martians)
@@ -72,6 +76,7 @@ class(martians)
 dim(martians)
 
 #view the column names
+#ensure the column names follow the same patterns (duration.seconds vs. date_posted)
 names(martians)
 
 #view the structure of the data
@@ -79,20 +84,21 @@ str(martians)
 
 #view a summary of the data
 summary(martians)
-#summary shows duration_seconds is numeric with a min of 0 seconds (which means no sighting) and 
+#summary shows duration_seconds is numeric (str()) with a min of 0 seconds (which means no sighting) and 
 #max is 82800000 seconds 
-#both seem unrealistic to have a sighting for 0 seconds or less and longer than ta day (24 hours)
+#both seem unrealistic to have a sighting for 0 seconds or less and longer than a day (24 hours)
 #so we should only include sightings that are above 0 seconds and below 24 hours (86400 seconds)
 
-
 #keep the original file untouched 
-#we will be working with the martians_tidy file
+#we will be working with the martians_tidy file with different versions 
+#keep multiple files as you edit on, it will let you look back and compare if the right/wrong changes were made
+
 #check and correct structural issues
 #identify the possible data (content) issues
 martians_tidy <- martians %>% 
-  mutate(date_sighting = as.Date(datetime)) %>% #convert datetime (character) to POSIX - only interested in the 
+  mutate(date_sighting = as.Date(datetime)) %>% #convert datetime (character) to date - only interested in the 
   #date so make a new column labelled as date_sighting
-  mutate(date_posted = as.Date(format(dmy(date_posted), "%Y-%m-%d"))) %>% #covert the date_posted to a POSIX, 
+  mutate(date_posted = as.Date(format(dmy(date_posted), "%Y-%m-%d"))) %>% #covert the date_posted to date, 
   #it is currently formatted as dmy but we are interested in ymd similar to date_sighting
   select(date_sighting, 
          city, 
@@ -104,7 +110,7 @@ martians_tidy <- martians %>%
          date_posted,
          latitude,
          longitude) #re-organize the table to remove datetime and include date_sighting instead
-  #change the column name of duration.seconds to match the trend of spaces are displayed as "_"
+  #change the column name of duration.seconds to be consistent with spaces displayed as "_"
   #remove the duration.hours.minutes column - it is unorganized, inconsistent - we get a summary of it via duration_seconds
 
 #check if the dates are dates
@@ -135,7 +141,7 @@ martians_tidy2 <- martians_tidy %>%
   #method above
   filter(!is.na(comments)) %>%
   filter(!str_detect(tolower(comments), "hoax|nuforc"))
-  #having an empty comment, the word "HOAX" or "NUFORC" (to lower case) in the comment suggests it was filtered 
+  #having an empty comment, the word "HOAX" or "NUFORC" (case sensitive) in the comment suggests it was filtered 
   #by NUFORC and identified as a potential hoax
   #a note by NUFORC typically corresponded with a mention of what the sighting actually was (ie. a star or meteor, etc.)
   #filter function will filter out the empty comments and comments with hoax or nuforc in them
@@ -151,7 +157,7 @@ martians_tidy2 <- martians_tidy %>%
 #between the date of the sighting and the date it was reported
 #negative values indicates an event that was posted before it happened
 martians_tidy3 <- martians_tidy2 %>%
-  mutate(report_delay = as.numeric(date_posted - date_sighting)) %>%  
+  mutate(report_delay = as.numeric(date_posted - date_sighting)) %>% #convert the differences to a numberic number
   filter(report_delay >= 0) #remove rows where the report delay is negative 
 
 #create a table with the average report_delay per country
@@ -164,6 +170,8 @@ view(avg_delay)
 summary(martians_tidy3)
 #wide range for the duration_seconds, we should log duration_seconds
 
+#histogram displaying the frequency of UFO sightings at the log(duration), the x and y axis are adjusted to 
+#fit all the data nicely, appropriate titles were given
 hist(log(martians_tidy3$duration_seconds), main = "Frequency of UFO Sightings vs. log(Duration)", 
      xlab = "log(Duration of Sighting (seconds))", ylab = "Frequnec of UFO Sightings",
      xlim = c(-2, 12), ylim = c(0, 6000))
