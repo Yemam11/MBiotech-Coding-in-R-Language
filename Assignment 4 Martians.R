@@ -89,6 +89,10 @@ summary(martians)
 #both seem unrealistic to have a sighting for 0 seconds or less and longer than a day (24 hours)
 #NOTE: we should only include sightings that are above 0 seconds and below 24 hours (86400 seconds)
 
+#Reviewer comment:
+#' Nicely done so far. I like your justification for including and omiting certain observations. 
+#' Code runs as expected so far with no errors
+
 #keep the original file untouched 
 #we will be working with the martians_tidy file with different versions 
 #keep multiple files as you edit, you can look back and compare if the right/wrong changes were made
@@ -112,6 +116,11 @@ martians_tidy <- martians %>%
          longitude) #re-organize the table to remove datetime and include date_sighting instead
   #change the column name of duration.seconds to be consistent with spaces displayed as "_"
   #remove the duration.hours.minutes column - it is unorganized, inconsistent - we get a summary of it via duration_seconds
+
+#Reviewer comments:
+#' An alternative way to do this: convert both to POSIXct, which counts seconds since jan 1st 1970. This makes it easy to compare dates/ do math with as well
+#' Converting it to date and dropping the datetime column also deletes information. What if you were interested in comparing when 2 sightings happened on the same day?
+#' 
 
 #check if the dates are dates
 class(martians_tidy$date_sighting)
@@ -150,6 +159,12 @@ martians_tidy2 <- martians_tidy %>%
   #if the creator, mentioned a potential hoax via another method that does not jump out (ie. not UFO), it is difficult 
   #to identify and remove
 
+#Reviewer comments:
+#' Nicely done, very thourough cleaning of the data set
+#' Suggestion: You can change all the "" values in the df to an NA in one line:
+#' martians_tidy[martians_tidy == ""] <- NA 
+#' This will do the same thing that all your mutate functions did
+
 #the creators of the dataset should've made a column that identified if the sighting may be a hoax or not, putting
 #it in the comment section is difficult to identify, especially when they are not consistent 
   
@@ -159,6 +174,11 @@ martians_tidy2 <- martians_tidy %>%
 martians_tidy3 <- martians_tidy2 %>%
   mutate(report_delay = as.numeric(date_posted - date_sighting)) %>% #convert the differences to a numeric number
   filter(report_delay >= 0) #filter and remove rows where the report delay is negative 
+
+
+#' Reviewer comment:
+#' Works as expected, but see the comment above about converting to POSIXct. this would have removed the need to convert to numeric
+#' Either way well done!
 
 #create a table with the average report_delay per country
 avg_delay <- martians_tidy3 %>%
@@ -175,4 +195,10 @@ summary(martians_tidy3)
 hist(log(martians_tidy3$duration_seconds), main = "Frequency of UFO Sightings vs. log(Duration)", 
      xlab = "log(Duration of Sighting (seconds))", ylab = "Frequnec of UFO Sightings",
      xlim = c(-2, 12), ylim = c(0, 6000))
+
+
+#Reviewer comments:
+#' Code works as expected, runs without errors
+#' Nice histogram! good idea to log the values
+#' Overall very well done. You tidied the data very thoroughly and met all the required analysis!
 
